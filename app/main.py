@@ -40,24 +40,19 @@ def main():
     extracted_tables = extract_tables(sample_pdf_path)
     extracted_images = extract_images_to_text(sample_pdf_path)
     
-    # 2. Structure the final prompt context
     final_context = f"--- Document Text ---\n{extracted_text}\n"
     
-    # Safely format tables into a pseudo-Markdown grid
     if extracted_tables:
         final_context += "\n--- Document Tables ---\n"
         for i, table in enumerate(extracted_tables):
             final_context += f"\nTable {i + 1}:\n"
             for row in table:
-                # Handle NoneTypes and remove unexpected newlines inside cells
                 clean_row = [str(cell).replace('\n', ' ') if cell is not None else "" for cell in row]
                 final_context += " | ".join(clean_row) + "\n"
 
-    # Append image text directly (no for-loop needed)
     if extracted_images.strip():
         final_context += f"\n--- Text Extracted From Images ---\n{extracted_images}\n"
         
-    # 3. Send to Gemini
     response = client.models.generate_content(
         model='gemini-3.7-flash',
         contents=f"Extract the metadata from the following document:\n\n{final_context}",
