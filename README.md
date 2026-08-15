@@ -11,4 +11,4 @@ This Proof of Concept (POC) automates the extraction of structured metadata from
 
 2. **To run this POC locally, you will need:**
     1. A `.env` file in the `/app` directory containing `GEMINI_API_KEY=...`
-    2. An OAuth 2.0 Client ID file named `client_secret.json` in the `/app` directory to enable Google Drive uploads.
+    2. An OAuth 2.0 Client ID file named `credentials.json` in the `/app` directory to enable Google Drive uploads.
