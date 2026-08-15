@@ -10,17 +10,44 @@ import pytesseract
 from schemas import DocumentMetadata
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaFileUpload
-from google.oauth2 import service_account
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+SCOPES = ['https://www.googleapis.com/auth/drive']
+
+def get_credentials():
+    """
+    OAuth as a real user (not a service account), since personal Gmail
+    accounts don't support Shared Drives and service accounts have no
+    storage quota of their own on regular Drive folders.
+
+    First run: opens a browser tab to consent, then caches the resulting
+    token in token.json so future runs don't prompt again.
+    """
+    creds = None
+    if os.path.exists('token.json'):
+        creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+
+    if not creds or not creds.valid:
+        if creds and creds.expired and creds.refresh_token:
+            creds.refresh(Request())
+        else:
+            flow = InstalledAppFlow.from_client_secrets_file(
+                'credentials.json', SCOPES
+            )
+            creds = flow.run_local_server(port=8080, open_browser=False)
+        with open('token.json', 'w') as token_file:
+            token_file.write(creds.to_json())
+
+    return creds
 
 def upload_to_drive(local_file_path: str, structured_data):
     shared_root_id = os.getenv("SHARED_ROOT_FOLDER_ID")
     if not shared_root_id:
         raise ValueError("SHARED_ROOT_FOLDER_ID is missing from the .env file.")
 
-    SCOPES = ['https://www.googleapis.com/auth/drive']
-    creds = service_account.Credentials.from_service_account_file(
-        'credentials.json', scopes=SCOPES
-    )
+    creds = get_credentials()
     service = build('drive', 'v3', credentials=creds)
 
     folder_name = structured_data.destination_path
@@ -102,7 +129,7 @@ def extract_images_to_text(path: str = "sample.pdf") -> str:
 def main():
     load_dotenv()
     client = genai.Client()
-    sample_pdf_path = "sample.pdf"
+    sample_pdf_path = "sample2.pdf"
     
     print("Extracting document content...")
     extracted_text = extract_test(sample_pdf_path)
